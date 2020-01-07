@@ -137,7 +137,7 @@ tls:
 csr:
   cn: <<<ENROLLMENT_ID>>>
   keyrequest:
-    algo: ecdsa
+    algo: gmsm2
     size: 256
   serialnumber:
   names:
@@ -189,8 +189,8 @@ caname:
 # crypto implementation library to use
 #############################################################################
 bccsp:
-    default: SW
-    sw:
+    default: GM
+    gmca:
         hash: SHA2
         security: 256
         filekeystore:
