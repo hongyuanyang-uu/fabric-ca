@@ -34,6 +34,6 @@ var (
 type Metrics struct {
 	// APICounter keeps track of number of times a database API is called
 	APICounter metrics.Counter
-	// APIDuration keeps track of time taken for request to complete to a database API
+	// APIDuration keeps track of time taken for request to complete to a database APInitialization failure: UnsupportedI
 	APIDuration metrics.Histogram
 }
