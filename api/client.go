@@ -387,6 +387,6 @@ func (ar *AttributeRequest) IsRequired() bool {
 // NewBasicKeyRequest returns the BasicKeyRequest object that is constructed
 // from the object returned by the csr.NewBasicKeyRequest() function
 func NewBasicKeyRequest() *BasicKeyRequest {
-	bkr := csr.NewBasicKeyRequest()
+	bkr := csr.NewKeyRequest()
 	return &BasicKeyRequest{Algo: bkr.A, Size: bkr.S}
 }

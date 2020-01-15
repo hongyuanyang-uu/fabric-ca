@@ -904,8 +904,8 @@ func (c *Client) verifyIdemixCredential() error {
 	return nil
 }
 
-func newCfsslBasicKeyRequest(bkr *api.BasicKeyRequest) *csr.BasicKeyRequest {
-	return &csr.BasicKeyRequest{A: bkr.Algo, S: bkr.Size}
+func newCfsslBasicKeyRequest(bkr *api.BasicKeyRequest) *csr.KeyRequest {
+	return &csr.KeyRequest{A: bkr.Algo, S: bkr.Size}
 }
 
 // NormalizeURL normalizes a URL (from cfssl)

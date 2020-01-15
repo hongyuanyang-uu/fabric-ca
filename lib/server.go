@@ -862,7 +862,7 @@ func (s *Server) autoGenerateTLSCertificateKey() error {
 	csrReq := s.Config.CAcfg.CSR
 	csrReq.CA = nil // Not requesting a CA certificate
 	hostname := util.Hostname()
-	log.Debugf("TLS CSR: %+v\n", csrReq)
+	log.Warningf("TLS CSR: %+v\n", csrReq)
 
 	// Can't use the same CN as the signing certificate CN (default: fabric-ca-server) otherwise no AKI is generated
 	csr, _, err := client.GenCSR(&csrReq, hostname)

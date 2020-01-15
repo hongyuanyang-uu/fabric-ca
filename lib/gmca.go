@@ -189,7 +189,7 @@ func parseCertificateRequest(csrBytes []byte) (template *sm2.Certificate, err er
 //cloudflare 证书请求 转成 国密证书请求
 func generate(priv crypto.Signer, req *csr.CertificateRequest, key bccsp.Key) (csr []byte, err error) {
 	log.Info("xx entry gm generate")
-	sigAlgo := signerAlgo(priv)
+	sigAlgo := SignerAlgo(priv)
 	if sigAlgo == sm2.UnknownSignatureAlgorithm {
 		return nil, fmt.Errorf("Private key is unavailable")
 	}
@@ -223,7 +223,7 @@ func generate(priv crypto.Signer, req *csr.CertificateRequest, key bccsp.Key) (c
 	return csr, err
 }
 
-func signerAlgo(priv crypto.Signer) sm2.SignatureAlgorithm {
+func SignerAlgo(priv crypto.Signer) sm2.SignatureAlgorithm {
 	switch pub := priv.Public().(type) {
 	case *sm2.PublicKey:
 		switch pub.Curve {

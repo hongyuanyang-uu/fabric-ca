@@ -118,7 +118,7 @@ func BccspBackedSigner(caFile, keyFile string, policy *config.Signing, csp bccsp
 
 // getBCCSPKeyOpts generates a key as specified in the request.
 // This supports ECDSA and RSA.
-func getBCCSPKeyOpts(kr csr.KeyRequest, ephemeral bool) (opts bccsp.KeyGenOpts, err error) {
+func getBCCSPKeyOpts(kr *csr.KeyRequest, ephemeral bool) (opts bccsp.KeyGenOpts, err error) {
 	if kr == nil {
 		return &bccsp.ECDSAKeyGenOpts{Temporary: ephemeral}, nil
 	}
@@ -250,6 +250,7 @@ func GetSignerFromCertFile(certFile string, csp bccsp.BCCSP) (bccsp.Key, crypto.
 		return nil, nil, nil, errors.Wrapf(err, "Could not read certFile '%s'", certFile)
 	}
 	cert, err := helpers.ParseCertificatePEM(certBytes)
+	//cert, err := sm2.ParseCertificate()
 	//var newCert = &x509.Certificate{}
 	if err != nil || cert == nil {
 		log.Infof("+++++++++++++ error = %s,Maybe it is a gm cert!", err.Error())
