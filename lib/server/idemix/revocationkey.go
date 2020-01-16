@@ -14,6 +14,8 @@ import (
 	"github.com/hyperledger/fabric-ca/util"
 	"github.com/pkg/errors"
 	"github.com/tjfoc/gmsm/sm2"
+	"crypto/ecdsa"
+	"unsafe"
 )
 
 // RevocationKey represents issuer revocation public and private key
@@ -151,7 +153,7 @@ func DecodeKeys(pemEncodedPK, pemEncodedPubKey []byte) (*sm2.PrivateKey, *sm2.Pu
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "Failed to parse ECDSA public key bytes")
 	}
-	publicKey := key.(*sm2.PublicKey)
+	publicKey := key.(*ecdsa.PublicKey)
 
-	return pk, publicKey, nil
+	return pk, (*sm2.PublicKey)(unsafe.Pointer(publicKey)), nil
 }
