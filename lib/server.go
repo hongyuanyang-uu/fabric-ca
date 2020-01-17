@@ -8,9 +8,9 @@ package lib
 
 import (
 	"context"
-	//"crypto/tls"
+	"crypto/tls"
 	//"crypto/x509"
-	tls "github.com/tjfoc/gmtls"
+	//tls "github.com/tjfoc/gmtls"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -44,7 +44,8 @@ import (
 	"github.com/hyperledger/fabric/common/metrics"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	"github.com/tjfoc/gmsm/sm2"
+	//"github.com/tjfoc/gmsm/sm2"
+	"crypto/x509"
 )
 
 const (
@@ -639,7 +640,7 @@ func (s *Server) listenAndServe() (err error) {
 			}
 		}
 
-		cer, err := util.LoadX509KeyPairSM2(c.TLS.CertFile, c.TLS.KeyFile, s.csp)
+		cer, err := util.LoadX509KeyPair(c.TLS.CertFile, c.TLS.KeyFile, s.csp)
 		if err != nil {
 			return err
 		}
@@ -655,7 +656,7 @@ func (s *Server) listenAndServe() (err error) {
 			return errors.New("Invalid client auth type provided")
 		}
 
-		var certPool *sm2.CertPool
+		var certPool *x509.CertPool
 		if authType != defaultClientAuth {
 			certPool, err = LoadPEMCertPool(c.TLS.ClientAuth.CertFiles)
 			if err != nil {
@@ -863,7 +864,8 @@ func (s *Server) autoGenerateTLSCertificateKey() error {
 	csrReq.CA = nil // Not requesting a CA certificate
 	hostname := util.Hostname()
 	log.Warningf("TLS CSR: %+v\n", csrReq)
-
+	csrReq.KeyRequest.Algo = "ecdsa"
+	csrReq.KeyRequest.Size = 256
 	// Can't use the same CN as the signing certificate CN (default: fabric-ca-server) otherwise no AKI is generated
 	csr, _, err := client.GenCSR(&csrReq, hostname)
 	if err != nil {

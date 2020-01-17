@@ -25,8 +25,17 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"github.com/tjfoc/gmsm/sm2"
-	tls "github.com/tjfoc/gmtls"
+	gtls "github.com/tjfoc/gmtls"
+	"crypto/tls"
 )
+
+var clientAuthTypesSm2 = map[string]gtls.ClientAuthType{
+	"noclientcert":               gtls.NoClientCert,
+	"requestclientcert":          gtls.RequestClientCert,
+	"requireanyclientcert":       gtls.RequireAnyClientCert,
+	"verifyclientcertifgiven":    gtls.VerifyClientCertIfGiven,
+	"requireandverifyclientcert": gtls.RequireAndVerifyClientCert,
+}
 
 var clientAuthTypes = map[string]tls.ClientAuthType{
 	"noclientcert":               tls.NoClientCert,
@@ -61,8 +70,8 @@ func BytesToX509Cert(bytes []byte) (*x509.Certificate, error) {
 }
 
 // LoadPEMCertPool loads a pool of PEM certificates from list of files
-func LoadPEMCertPool(certFiles []string) (*sm2.CertPool, error) {
-	certPool := sm2.NewCertPool()
+func LoadPEMCertPool(certFiles []string) (*x509.CertPool, error) {
+	certPool := x509.NewCertPool()
 
 	if len(certFiles) > 0 {
 		for _, cert := range certFiles {

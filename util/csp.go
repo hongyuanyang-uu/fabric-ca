@@ -162,8 +162,11 @@ func GetSignerFromCert(cert *x509.Certificate, csp bccsp.BCCSP) (bccsp.Key, cryp
 		return nil, nil, errors.New("CSP was not initialized")
 	}
 	log.Infof("xxxx begin csp.KeyImport,cert.PublicKey is %T   csp:%T", cert.PublicKey, csp)
+
+	keyType := 0
 	switch cert.PublicKey.(type) {
 	case sm2.PublicKey:
+		keyType = 1
 		log.Infof("xxxxx cert is sm2 puk")
 	default:
 		log.Infof("xxxxx cert is default puk")
@@ -178,7 +181,8 @@ func GetSignerFromCert(cert *x509.Certificate, csp bccsp.BCCSP) (bccsp.Key, cryp
 	kname := hex.EncodeToString(certPubK.SKI())
 	log.Infof("xxxx begin csp.GetKey kname:%s", kname)
 	// Get the key given the SKI value
-	privateKey, err := csp.GetKey(certPubK.SKI())
+
+	privateKey, err := csp.GetKey(certPubK.SKI(), keyType)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Could not find matching private key for SKI: %s", err.Error())
 	}
@@ -199,8 +203,10 @@ func GetSignerFromSM2Cert(cert *sm2.Certificate, csp bccsp.BCCSP) (bccsp.Key, cr
 	}
 
 	log.Infof("xxxx begin csp.KeyImport,cert.PublicKey is %T   csp:%T", cert.PublicKey, csp)
+	keyType := 0
 	switch cert.PublicKey.(type) {
 	case sm2.PublicKey:
+		keyType = 1
 		log.Infof("xxxxx cert is sm2 puk")
 	default:
 		log.Infof("xxxxx cert is default puk")
@@ -227,7 +233,7 @@ func GetSignerFromSM2Cert(cert *sm2.Certificate, csp bccsp.BCCSP) (bccsp.Key, cr
 	log.Infof("xxxx begin csp.GetKey kname:%s", kname)
 
 	// Get the key given the SKI value
-	privateKey, err := csp.GetKey(certPubK.SKI())
+	privateKey, err := csp.GetKey(certPubK.SKI(), keyType)
 	if err != nil {
 		return nil, nil, errors.Errorf("The private key associated with the certificate with SKI '%s' was not found", hex.EncodeToString(certPubK.SKI()))
 	}

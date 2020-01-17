@@ -82,6 +82,7 @@ type CAConfig struct {
 	Version      string `skip:"true"`
 	Cfg          CfgOptions
 	CA           CAInfo
+	enrollCA     CAInfo
 	Signing      *config.Signing `skip:"true"`
 	CSR          api.CSRInfo
 	Registry     CAConfigRegistry

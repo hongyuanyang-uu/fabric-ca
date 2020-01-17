@@ -77,6 +77,8 @@ type CA struct {
 	HomeDir string
 	// The CA's configuration
 	Config *CAConfig
+	// The CA's configuration
+	enrollConfig *CAConfig
 	// The file path of the config file
 	ConfigFilePath string
 	// The database handle used to store certificates and optionally
@@ -267,7 +269,7 @@ func (ca *CA) initKeyMaterial(renew bool) error {
 	}
 
 	// Get the CA cert
-	cert, err := ca.getCACert()
+	cert, enrollCert, err := ca.getCACert()
 	if err != nil {
 		return err
 	}
@@ -276,6 +278,15 @@ func (ca *CA) initKeyMaterial(renew bool) error {
 	if err != nil {
 		return errors.Wrap(err, "Failed to store certificate")
 	}
+
+	keyFile = ca.Config.enrollCA.Keyfile
+	certFile = ca.Config.enrollCA.Certfile
+	// Store the enroll certificate to file
+	err = writeFile(certFile, enrollCert, 0644)
+	if err != nil {
+		return errors.Wrap(err, "Failed to store enroll certificate")
+	}
+
 	log.Infof("The CA key and certificate were generated for CA %s", ca.Config.CA.Name)
 	log.Infof("The key was stored by BCCSP provider '%s'", ca.Config.CSP.ProviderName)
 	log.Infof("The certificate is at: %s", certFile)
@@ -284,7 +295,7 @@ func (ca *CA) initKeyMaterial(renew bool) error {
 }
 
 // Get the CA certificate for this CA
-func (ca *CA) getCACert() (cert []byte, err error) {
+func (ca *CA) getCACert() (cert []byte, enrollCert []byte, err error) {
 	if ca.Config.Intermediate.ParentServer.URL != "" {
 		// This is an intermediate CA, so call the parent fabric-ca-server
 		// to get the cert
@@ -301,7 +312,7 @@ func (ca *CA) getCACert() (cert []byte, err error) {
 		clientCfg.CSR = ca.Config.CSR
 		clientCfg.CSP = ca.Config.CSP
 		if ca.Config.CSR.CN != "" {
-			return nil, errors.Errorf("CN '%s' cannot be specified for an intermediate CA. Remove CN from CSR section for enrollment of intermediate CA to be successful", ca.Config.CSR.CN)
+			return nil, nil, errors.Errorf("CN '%s' cannot be specified for an intermediate CA. Remove CN from CSR section for enrollment of intermediate CA to be successful", ca.Config.CSR.CN)
 		}
 		if clientCfg.Enrollment.Profile == "" {
 			clientCfg.Enrollment.Profile = "ca"
@@ -317,28 +328,28 @@ func (ca *CA) getCACert() (cert []byte, err error) {
 		var resp *EnrollmentResponse
 		resp, err = clientCfg.Enroll(ca.Config.Intermediate.ParentServer.URL, ca.HomeDir)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		// Set the CN for an intermediate server to be the ID used to enroll with root CA
 		ca.Config.CSR.CN = resp.Identity.GetName()
 		ecert := resp.Identity.GetECert()
 		if ecert == nil {
-			return nil, errors.New("No enrollment certificate returned by parent server")
+			return nil, nil, errors.New("No enrollment certificate returned by parent server")
 		}
 		cert = ecert.Cert()
 		// Store the chain file as the concatenation of the parent's chain plus the cert.
 		chainPath := ca.Config.CA.Chainfile
 		chain, err := ca.concatChain(resp.CAInfo.CAChain, cert)
 		if err != nil {
-			return nil, err
+			return nil,  nil, err
 		}
 		err = os.MkdirAll(path.Dir(chainPath), 0755)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to create intermediate chain file directory")
+			return nil, nil,  errors.Wrap(err, "Failed to create intermediate chain file directory")
 		}
 		err = util.WriteFile(chainPath, chain, 0644)
 		if err != nil {
-			return nil, errors.WithMessage(err, "Failed to create intermediate chain file")
+			return nil, nil,  errors.WithMessage(err, "Failed to create intermediate chain file")
 		}
 		log.Debugf("Stored intermediate certificate chain at %s", chainPath)
 	} else {
@@ -369,7 +380,7 @@ func (ca *CA) getCACert() (cert []byte, err error) {
 		// Generate the key/signer
 		key, cspSigner, err := util.BCCSPKeyRequestGenerate(&req, ca.csp)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		// Call CFSSL to initialize the CA
 		if IsGMConfig() {
@@ -378,10 +389,23 @@ func (ca *CA) getCACert() (cert []byte, err error) {
 			cert, _, err = initca.NewFromSigner(&req, cspSigner)
 		}
 		if err != nil {
-			return nil, errors.WithMessage(err, "Failed to create new CA certificate")
+			return nil, nil, errors.WithMessage(err, "Failed to create new CA certificate")
+		}
+
+		req.KeyRequest = &cfcsr.KeyRequest{A: "ecdsa", S: csr.KeyRequest.Size}
+
+		key, cspSigner, err = util.BCCSPKeyRequestGenerate(&req, ca.csp)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Call CFSSL to initialize the CA
+		enrollCert, _, err = initca.NewFromSigner(&req, cspSigner)
+		if err != nil {
+			return nil, nil, errors.WithMessage(err, "Failed to create new CA certificate")
 		}
 	}
-	return cert, nil
+	return cert, enrollCert, nil
 }
 
 // Return a certificate chain which is the concatenation of chain and cert
@@ -452,6 +476,12 @@ func (ca *CA) initConfig() (err error) {
 	}
 	if cfg.CA.Keyfile == "" {
 		cfg.CA.Keyfile = "ca-key.pem"
+	}
+	if cfg.enrollCA.Certfile == "" {
+		cfg.enrollCA.Certfile = "enroll-cert.pem"
+	}
+	if cfg.enrollCA.Keyfile == "" {
+		cfg.enrollCA.Keyfile = "enroll-key.pem"
 	}
 	if cfg.CA.Chainfile == "" {
 		cfg.CA.Chainfile = "ca-chain.pem"
@@ -780,7 +810,7 @@ func (ca *CA) initEnrollmentSigner() (err error) {
 		}
 	}
 
-	ca.enrollSigner, err = util.BccspBackedSigner(c.CA.Certfile, c.CA.Keyfile, policy, ca.csp)
+	ca.enrollSigner, err = util.BccspBackedSigner(c.enrollCA.Certfile, c.enrollCA.Keyfile, policy, ca.csp)
 	if err != nil {
 		return err
 	}
@@ -941,6 +971,8 @@ func (ca *CA) makeFileNamesAbsolute() error {
 	fields := []*string{
 		&ca.Config.CA.Certfile,
 		&ca.Config.CA.Keyfile,
+		&ca.Config.enrollCA.Certfile,
+		&ca.Config.enrollCA.Keyfile,
 		&ca.Config.CA.Chainfile,
 	}
 	err := util.MakeFileNamesAbsolute(fields, ca.HomeDir)
