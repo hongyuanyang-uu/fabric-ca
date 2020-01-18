@@ -867,7 +867,7 @@ func (s *Server) autoGenerateTLSCertificateKey() error {
 	csrReq.KeyRequest.Algo = "ecdsa"
 	csrReq.KeyRequest.Size = 256
 	// Can't use the same CN as the signing certificate CN (default: fabric-ca-server) otherwise no AKI is generated
-	csr, _, err := client.GenCSR(&csrReq, hostname)
+	csr, _, err := client.GenCSR(&csrReq, hostname, 0)
 	if err != nil {
 		return fmt.Errorf("Failed to generate CSR: %s", err)
 	}

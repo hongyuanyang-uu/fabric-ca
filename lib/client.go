@@ -193,7 +193,7 @@ func (c *Client) GetCAInfo(req *api.GetCAInfoRequest) (*GetCAInfoResponse, error
 }
 
 // GenCSR generates a CSR (Certificate Signing Request)
-func (c *Client) GenCSR(req *api.CSRInfo, id string) ([]byte, bccsp.Key, error) {
+func (c *Client) GenCSR(req *api.CSRInfo, id string, cryptoType int) ([]byte, bccsp.Key, error) {
 	log.Debugf("GenCSR %+v", req)
 
 	err := c.Init()
@@ -213,8 +213,12 @@ func (c *Client) GenCSR(req *api.CSRInfo, id string) ([]byte, bccsp.Key, error) 
 		log.Debugf("failed generating BCCSP key: %s", err)
 		return nil, nil, err
 	}
-
-	csrPEM, err := csr.Generate(cspSigner, cr)
+	var csrPEM []byte
+	if cryptoType == 0 {
+		csrPEM, err = csr.Generate(cspSigner, cr)
+	} else {
+		csrPEM, err = csr.GenerateSM2(cspSigner, cr)
+	}
 	if err != nil {
 		log.Debugf("failed generating CSR: %s", err)
 		return nil, nil, err
@@ -267,7 +271,7 @@ func (c *Client) net2LocalCAInfo(net *common.CAInfoResponseNet, local *GetCAInfo
 
 func (c *Client) handleX509Enroll(req *api.EnrollmentRequest) (*EnrollmentResponse, error) {
 	// Generate the CSR
-	csrPEM, key, err := c.GenCSR(req.CSR, req.Name)
+	csrPEM, key, err := c.GenCSR(req.CSR, req.Name, 1)
 	if err != nil {
 		return nil, errors.WithMessage(err, "Failure generating CSR")
 	}
