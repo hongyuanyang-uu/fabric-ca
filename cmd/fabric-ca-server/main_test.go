@@ -129,7 +129,7 @@ func TestOneTimePass(t *testing.T) {
 	os.RemoveAll(testDir)
 	defer os.RemoveAll(testDir)
 	// Test with "-b" option
-	err := RunMain([]string{cmdName, "start", "-b", "admin:adminpw", "--registry.maxenrollments", "1", "-H", testDir})
+	err := RunMain([]string{cmdName, "start", "-b", "admin:adminpw", "--registry.maxenrollments", "-1", "-H", testDir})
 	if err != nil {
 		t.Fatalf("Failed to init server with one time passwords: %s", err)
 	}
