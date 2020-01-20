@@ -93,6 +93,8 @@ type CA struct {
 	registry user.Registry
 	// The signer used for enrollment
 	enrollSigner signer.Signer
+	// The signer used for enrollment
+	enrollHttpsSigner signer.Signer
 	// Idemix issuer
 	issuer idemix.Issuer
 	// The options to use in verifying a signature in token-based authentication
@@ -810,12 +812,17 @@ func (ca *CA) initEnrollmentSigner() (err error) {
 		}
 	}
 
-	ca.enrollSigner, err = util.BccspBackedSigner(c.enrollCA.Certfile, c.enrollCA.Keyfile, policy, ca.csp)
+	ca.enrollHttpsSigner, err = util.BccspBackedSigner(c.enrollCA.Certfile, c.enrollCA.Keyfile, policy, ca.csp)
+	if err != nil {
+		return err
+	}
+	ca.enrollHttpsSigner.SetDBAccessor(ca.certDBAccessor)
+
+	ca.enrollSigner, err = util.BccspBackedSigner(c.CA.Certfile, c.CA.Keyfile, policy, ca.csp)
 	if err != nil {
 		return err
 	}
 	ca.enrollSigner.SetDBAccessor(ca.certDBAccessor)
-
 	// Successful enrollment
 	return nil
 }
@@ -897,7 +904,7 @@ func (ca *CA) addIdentity(id *CAConfigIdentity, errIfFound bool) error {
 		if errIfFound {
 			return errors.Errorf("Identity '%s' is already registered", id.Name)
 		}
-		log.Debugf("Identity '%s' already registered, loaded identity", user.GetName())
+		log.Warningf("Identity '%s' already registered, loaded identity", user.GetName())
 		return nil
 	}
 
