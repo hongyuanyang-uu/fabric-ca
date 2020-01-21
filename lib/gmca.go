@@ -131,10 +131,10 @@ func parseCertificateRequest(csrBytes []byte) (template *sm2.Certificate, err er
 		return
 	}
 	err = csrv.CheckSignature()
-	// if err != nil {
+	if err != nil {
 	// 	//err = cferr.Wrap(cferr.CSRError, cferr.KeyMismatch, err)
-	// 	return
-	// }
+		return
+	}
 	template = &sm2.Certificate{
 		Subject:            csrv.Subject,
 		PublicKeyAlgorithm: csrv.PublicKeyAlgorithm,
