@@ -118,6 +118,14 @@ func createGmSm2Cert(key bccsp.Key, req *csr.CertificateRequest, priv crypto.Sig
 		log.Infof("parseCertificateRequest return err:%s", err)
 		return nil, err
 	}
+	sm2Template.KeyUsage |= sm2.KeyUsageDigitalSignature |
+		sm2.KeyUsageKeyEncipherment | sm2.KeyUsageCertSign |
+		sm2.KeyUsageCRLSign
+	sm2Template.ExtKeyUsage = []sm2.ExtKeyUsage{
+		sm2.ExtKeyUsageClientAuth,
+		sm2.ExtKeyUsageServerAuth,
+	}
+	sm2Template.SubjectKeyId = key.SKI();
 	log.Infof("key is %T   ---%T", sm2Template.PublicKey, sm2Template)
 	cert, err = gm.CreateCertificateToMem(sm2Template, sm2Template, key)
 	return cert, err
