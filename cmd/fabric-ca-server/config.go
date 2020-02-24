@@ -185,8 +185,8 @@ registry:
 #  or "mysql".
 #############################################################################
 db:
-  type: mysql
-  datasource: root:123456@tcp(172.18.11.37:3306)/fabric_mac_ca?parseTime=true
+  type: sqlite3
+  datasource: fabric-ca-server.db
   tls:
       enabled: false
       certfiles:
