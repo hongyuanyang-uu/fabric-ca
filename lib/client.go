@@ -287,7 +287,7 @@ func (c *Client) handleX509Enroll(req *api.EnrollmentRequest) (*EnrollmentRespon
 	reqNet.SignRequest.Request = string(csrPEM)
 	reqNet.SignRequest.Profile = req.Profile
 	reqNet.SignRequest.Label = req.Label
-
+	log.Infof("request pem:%s", reqNet.SignRequest.Request)
 	body, err := util.Marshal(reqNet, "SignRequest")
 	if err != nil {
 		return nil, err
@@ -742,7 +742,7 @@ func (c *Client) SendReq(req *http.Request, result interface{}) (err error) {
 			}
 		}()
 		if err != nil {
-			return errors.Wrapf(err, "Failed to read response of request: %s", reqStr)
+			return errors.Wrapf(err, "lib client Failed to read response of request: %s", reqStr)
 		}
 		log.Debugf("Received response\n%s", util.HTTPResponseToString(resp))
 	}

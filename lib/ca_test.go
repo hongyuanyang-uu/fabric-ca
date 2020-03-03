@@ -416,7 +416,7 @@ func TestCAgetCaCert(t *testing.T) {
 		t.Fatal("newCA failed ", err)
 	}
 	cfg.CSR.CA.Expiry = ""
-	_, err = ca.getCACert()
+	_, _, err = ca.getCACert()
 	if err != nil {
 		t.Error("getCaCert failed ", err)
 	}

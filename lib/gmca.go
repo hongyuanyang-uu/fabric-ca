@@ -27,6 +27,12 @@ import (
 	"github.com/hyperledger/fabric-ca/util"
 )
 
+func SignCertSm2(req string) (err error){
+	block, _ := pem.Decode([]byte(req))
+	_, err = parseCertificateRequest(block.Bytes)
+	return
+}
+
 //证书签名
 func signCert(req signer.SignRequest, ca *CA) (cert []byte, err error) {
 	/*csr := parseCertificateRequest()

@@ -362,7 +362,7 @@ func getEnrollmentPayload(t *testing.T, c *Client) ([]byte, error) {
 	}
 
 	// Generate the CSR
-	csrPEM, _, err := c.GenCSR(req.CSR, req.Name)
+	csrPEM, _, err := c.GenCSR(req.CSR, req.Name, 1)
 	if err != nil {
 		t.Logf("Enroll failure generating CSR: %s", err)
 		return nil, err
@@ -640,7 +640,7 @@ func masqueradeEnroll(c *Client, id string, passInSubject bool, req *api.Enrollm
 	if err != nil {
 		return nil, err
 	}
-	csrPEM, key, err := c.GenCSR(req.CSR, id)
+	csrPEM, key, err := c.GenCSR(req.CSR, id, 1)
 	if err != nil {
 		log.Debugf("Enroll failure generating CSR: %s", err)
 		return nil, err
@@ -682,7 +682,7 @@ func masqueradeReenroll(c *Client, id string, identity *Identity, passInSubject 
 	if err != nil {
 		return nil, err
 	}
-	csrPEM, key, err := c.GenCSR(req.CSR, id)
+	csrPEM, key, err := c.GenCSR(req.CSR, id, 1)
 	if err != nil {
 		log.Debugf("Enroll failure generating CSR: %s", err)
 		return nil, err

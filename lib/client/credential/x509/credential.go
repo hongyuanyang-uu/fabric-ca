@@ -114,6 +114,7 @@ func (cred *Credential) Store() error {
 	if cred.val == nil {
 		return errors.New("X509 Credential value is not set")
 	}
+	log.Warningf("x509 store credential: %s", cred.val.Cert())
 	err := util.WriteFile(cred.certFile, cred.val.Cert(), 0644)
 	if err != nil {
 		return errors.WithMessage(err, "Failed to store the certificate")
