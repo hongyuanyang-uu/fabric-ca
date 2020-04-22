@@ -354,6 +354,40 @@ func (ca *CA) getCACert() (cert []byte, enrollCert []byte, err error) {
 			return nil, nil,  errors.WithMessage(err, "Failed to create intermediate chain file")
 		}
 		log.Debugf("Stored intermediate certificate chain at %s", chainPath)
+
+		csr := &ca.Config.CSR
+		if csr.CA == nil {
+			csr.CA = &cfcsr.CAConfig{}
+		}
+		if csr.CA.Expiry == "" {
+			csr.CA.Expiry = defaultRootCACertificateExpiration
+		}
+
+		if (csr.KeyRequest == nil) || (csr.KeyRequest.Algo == "" && csr.KeyRequest.Size == 0) {
+			csr.KeyRequest = GetKeyRequest(ca.Config)
+		}
+
+		req := cfcsr.CertificateRequest{
+			CN:           csr.CN,
+			Names:        csr.Names,
+			Hosts:        csr.Hosts,
+			KeyRequest:   &cfcsr.KeyRequest{A: csr.KeyRequest.Algo, S: csr.KeyRequest.Size},
+			CA:           csr.CA,
+			SerialNumber: csr.SerialNumber,
+		}
+
+		req.KeyRequest = &cfcsr.KeyRequest{A: "ecdsa", S: csr.KeyRequest.Size}
+		// Generate the key/signer
+		_, cspSigner, err := util.BCCSPKeyRequestGenerate(&req, ca.csp)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Call CFSSL to initialize the CA
+		enrollCert, _, err = initca.NewFromSigner(&req, cspSigner)
+		if err != nil {
+			return nil, nil, errors.WithMessage(err, "Failed to create new CA certificate")
+		}
 	} else {
 		// This is a root CA, so create a CSR (Certificate Signing Request)
 		if ca.Config.CSR.CN == "" {

@@ -126,10 +126,21 @@ func TestErrors(t *testing.T) {
 
 func TestOneTimePass(t *testing.T) {
 	testDir := "oneTimePass"
-	os.RemoveAll(testDir)
-	defer os.RemoveAll(testDir)
+	//os.RemoveAll(testDir)
+	//defer os.RemoveAll(testDir)
 	// Test with "-b" option
-	err := RunMain([]string{cmdName, "start", "-b", "admin:adminpw", "--registry.maxenrollments", "-1", "-H", testDir})
+	err := RunMain([]string{cmdName, "start", "-b", "user:123", "--cfg.identities.allowremove","--cfg.affiliations.allowremove","--registry.maxenrollments", "-1", "-H", testDir})
+	if err != nil {
+		t.Fatalf("Failed to init server with one time passwords: %s", err)
+	}
+}
+
+func TestOneTimeInterPass(t *testing.T) {
+	testDir := "oneTimePass"
+	//os.RemoveAll(testDir)
+	//defer os.RemoveAll(testDir)
+	// Test with "-b" option
+	err := RunMain([]string{cmdName, "start", "-b", "user:123", "--cfg.identities.allowremove","--cfg.affiliations.allowremove","--registry.maxenrollments", "-1", "-H", testDir})
 	if err != nil {
 		t.Fatalf("Failed to init server with one time passwords: %s", err)
 	}

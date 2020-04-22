@@ -147,7 +147,7 @@ func handleEnroll(ctx *serverRequestContextImpl, id string) (interface{}, error)
 	}
 	// Sign the certificate
 	//cert, err := ca.enrollSigner.Sm2Sign(req.SignRequest)
-	log.Infof("eq.SignRequest: %+v", req.SignRequest)
+	log.Debugf("req.SignRequest: %+v", req.SignRequest)
 	cert, err := signCert(req.SignRequest, ca)
 	if err != nil {
 		return nil, errors.WithMessage(err, "Certificate signing failure")
