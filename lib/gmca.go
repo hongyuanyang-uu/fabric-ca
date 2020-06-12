@@ -196,6 +196,11 @@ func parseCertificateRequest(csrBytes []byte) (template *sm2.Certificate, err er
 	serialNumber[0] &= 0x7F
 
 	template.SerialNumber = new(big.Int).SetBytes(serialNumber)
+	ski, err := signer.ComputeSKISM2(template)
+	if err != nil {
+		return nil, err
+	}
+	template.SubjectKeyId = ski
 
 	return
 }
